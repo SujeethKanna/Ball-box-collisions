@@ -25,18 +25,11 @@ std::array<float, 2> closest_point(float x, float y, float x1, float y1, float x
    return closest_point;
 }
 
-float dist(float x1, float y1, float x2, float y2){
-   float d_x = x1 - x2;
-   float d_y = y1 - y2;
-   float distance = sqrt(d_x*d_x + d_y*d_y);
-   return distance;
-}
-
 class Box {
 public:
-    float v[4][2]; // The 4 corners: TL, TR, BR, BL
+    float v[4][2]; // The 4 corners.
     
-    float pivot_x, pivot_y; // Center of the box
+    float pivot_x, pivot_y; 
     float w, h;
     int colour;
 
@@ -45,7 +38,7 @@ public:
         w = box_width;
         h = box_height;
         
-        // Pivot is now the CENTER (x, y)
+        // Pivot is now the centre (x, y)
         pivot_x = x;
         pivot_y = y; 
 
@@ -68,7 +61,7 @@ public:
         }
     }
 
-    // Calculates absolute rotation around the center.
+    // Calculates rotation around the center (pivot).
     void rotate_box(float angle) {
         float c = cos(angle*PI/180);
         float s = sin(angle*PI/180);
@@ -143,20 +136,26 @@ class Ball{
    void box_edge_collisions(float x1, float y1, float x2, float y2){
       // Computes the closest point.
       std::array<float, 2> close_point = closest_point(X, Y, x1, y1, x2, y2);
+      float dx = X - close_point[0];
+      float dy = Y - close_point[1];
+      float dist_sq = (dx*dx) + (dy*dy);
       // Edge collision:
-      if (dist(close_point[0], close_point[1], X, Y) <= size + 0.0001 ){
-         float length = dist(close_point[0], close_point[1], X, Y);
+      if (dist_sq <= (size + 0.0001)*(size + 0.0001)){
+         float length = sqrt(dist_sq);
+
+         // Prevents division by zero to avoid errors.
+         if (length == 0) return;
+
          // Normal direction:
-         float n_x = (X - close_point[0])/length;
-         float n_y = (Y - close_point[1])/length;
+         float n_x = dx/length;
+         float n_y = dy/length;
          float v_x = speed[0];
          float v_y = speed[1];
 
          // Velocity along normal direction:
          float dot_product = v_x*n_x + v_y*n_y;
 
-         /* Making sure that the ball is moving towards 
-         the edge when colliding to avoid velcro effect.*/ 
+         // Velcro effect check (Only reflect if moving towards the edge).
          if (dot_product < 0) {
             /* Updating the components of the ball's velocity 
             based on the laws of reflection.*/
@@ -192,13 +191,10 @@ void loop(){
 
    // Left edge.
    ball.box_edge_collisions(box.v[0][0], box.v[0][1], box.v[3][0], box.v[3][1]);
-    
     // Right edge.
    ball.box_edge_collisions(box.v[2][0], box.v[2][1], box.v[1][0], box.v[1][1]);
-    
     // Top edge.
    ball.box_edge_collisions(box.v[1][0], box.v[1][1], box.v[0][0], box.v[0][1]);
-    
     // Bottom edge.
    ball.box_edge_collisions(box.v[3][0], box.v[3][1], box.v[2][0], box.v[2][1]);
 
